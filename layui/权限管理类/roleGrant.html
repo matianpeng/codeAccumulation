@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>权限管理</title>
+<link rel="stylesheet" type="text/css"
+	href="js/layui/css/layui.css">
+<style type="text/css">
+.lists {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.list {
+	margin-left: 5%;
+	line-height: 40px;
+}
+
+#panel {
+	height: 600px;
+}
+
+.layui-bg-blue, .layui-bg-gray, .lists {
+	padding: 15px;
+}
+
+.layui-bg-gray {
+	padding-left: 40px;
+}
+</style>
+</head>
+<body>
+	<form class="layui-form">
+	<div id="panel"  class="layui-form"></div>
+	  <div class="layui-form-item" style="margin-top: 52px;margin-left: 50px;">
+	    <div class="layui-input-block">
+	      <button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+	      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+	    </div>
+  </div>
+	</form>
+</body>
+<script type="text/javascript"
+	src="js/layui/layui.js"></script>
+<script>
+layui.use(['table','form','element','layer','laydate'], function() {
+	var $ = layui.$,
+	form = layui.form,
+	 _html = '',
+	 list;
+	//监听提交
+	form.on('submit(demo1)', function(data){
+		var tempArray = new Array();
+		$("input:checkbox:checked").each(function(i){
+	        tempArray[i] = $(this).val();
+	  	}); 
+	 	 var b= tempArray.join(",");
+		 $.post("${path }/role/grant",{id:'${id}',resourceIds:b},function(rs){
+			 window.parent.layui.layer.closeAll();
+	    	 window.parent.layui.layer.alert(rs.msg)
+			
+		 });
+	  return false;
+	});
+
+        	  list=[{"isTrue":"0","children":[{"isTrue":"0","name":"数据授权","id":240,"btn":[]},{"isTrue":"0","name":"资源管理","id":11,"btn":[{"isTrue":"0","name":"列表","id":"111"},{"isTrue":"0","name":"添加","id":"112"},{"isTrue":"0","name":"编辑","id":"113"},{"isTrue":"0","name":"删除","id":"114"}]},{"isTrue":"0","name":"角色管理","id":12,"btn":[{"isTrue":"0","name":"列表","id":"121"},{"isTrue":"0","name":"添加","id":"122"},{"isTrue":"0","name":"编辑","id":"123"},{"isTrue":"0","name":"删除","id":"124"},{"isTrue":"0","name":"授权","id":"125"}]},{"isTrue":"0","name":"用户管理","id":13,"btn":[{"isTrue":"0","name":"列表","id":"131"},{"isTrue":"0","name":"添加","id":"132"},{"isTrue":"0","name":"编辑","id":"133"},{"isTrue":"0","name":"删除","id":"134"},{"isTrue":"0","name":"列表","id":"141"},{"isTrue":"0","name":"修改密码","id":"226"}]}],"name":"权限管理","id":"1"},{"isTrue":"0","children":[{"isTrue":"0","name":"数据视图","id":234,"btn":[]},{"isTrue":"0","name":"数据库配置","id":239,"btn":[]}],"name":"报表","id":"233"}];
+
+			for(var i in list) {
+				_html += '<div class="box"><div class="layui-bg-blue">'
+				if(list[i].isTrue == "1") {
+					_html += '<input type="checkbox" lay-filter="level1" class="level1" value="' + list[i].id + '" name="' + list[i].name + '" checked title="' + list[i].name + '" lay-skin="primary">'
+				} else {
+					_html += '<input type="checkbox" lay-filter="level1" class="level1" value="' + list[i].id + '" name="' + list[i].name + '" title="' + list[i].name + '" lay-skin="primary">'
+				}
+
+				_html += '</div><div class="boxin">'
+
+				for(var j in list[i].children) {
+					_html += '<div class="layui-bg-gray">'
+					if(list[i].children[j].isTrue == "1") {
+						_html += '<input type="checkbox" lay-filter="level2" class="level2" value="' + list[i].children[j].id + '" checked name="' + list[i].children[j].name + '" title="' + list[i].children[j].name + '" lay-skin="primary">'
+					} else {
+						_html += '<input type="checkbox" lay-filter="level2" class="level2"  value="' + list[i].children[j].id + '" name="' + list[i].children[j].name + '" title="' + list[i].children[j].name + '" lay-skin="primary">'
+					}
+
+					_html += '</div><div class="lists">'
+
+					for(var k in list[i].children[j].btn) {
+						_html += '<div class="list">'
+						if(list[i].children[j].btn[k].isTrue == "1") {
+							_html += '<input type="checkbox" lay-filter="level3" class="level3"  value="' + list[i].children[j].btn[k].id + '" name="' + list[i].children[j].btn[k].name + '" checked title="' + list[i].children[j].btn[k].name + '" lay-skin="primary">'
+						} else {
+							_html += '<input type="checkbox" lay-filter="level3" class="level3"  value="' + list[i].children[j].btn[k].id + '"  name="' + list[i].children[j].btn[k].name + '" title="' + list[i].children[j].btn[k].name + '" lay-skin="primary">'
+						}
+						_html += '</div>'
+					}
+
+					_html += '</div>'
+				}
+
+				_html += '</div></div>'
+			}
+
+			$("#panel").append(_html)
+			form.render()
+
+			form.on("checkbox",function(data){
+				 var classNa = $(data.elem).parent()[0].className;
+	
+				if(classNa == "layui-bg-blue") {
+					$(data.elem).parent().next(".boxin").find("input[type='checkbox']").prop("checked", data.elem.checked)
+					
+				} else if(classNa =="layui-bg-gray") {
+					$(data.elem).parent().next(".lists").find("input[type='checkbox']").prop("checked", data.elem.checked);
+					if($(data.elem).parents(".boxin").children(".layui-bg-gray").children(".layui-form-checked").length==0){
+						$(data.elem).parents(".boxin").prev(".layui-bg-blue").children("input").prop("checked", false)
+					}else{
+						$(data.elem).parents(".boxin").prev(".layui-bg-blue").children("input").prop("checked", true)
+					}
+					 form.render();
+					
+				} else if(classNa == "list") {
+					if($(data.elem).parents(".lists").children(".list").children(".layui-form-checked").length==0){
+						$(data.elem).parents(".lists").prev(".layui-bg-gray").children("input").prop("checked", false)
+					}else{
+						$(data.elem).parents(".lists").prev(".layui-bg-gray").children("input").prop("checked", true)
+					}
+					 form.render();
+					if($(data.elem).parents(".boxin").children(".layui-bg-gray").children(".layui-form-checked").length==0){
+						$(data.elem).parents(".boxin").prev(".layui-bg-blue").children("input").prop("checked", false)
+					}else{
+						$(data.elem).parents(".boxin").prev(".layui-bg-blue").children("input").prop("checked", true)
+					}
+					
+				}  
+					
+				form.render();
+			})
+		});
+		
+	</script>
+</html>

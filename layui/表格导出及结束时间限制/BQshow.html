@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="js/layui/css/layui.css?v=123">
+    <script src="js/layui/layui.js"></script>
+</head>
+<style>
+    body {
+        padding: 10px;
+    }
+
+    #condition {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .mate-icon {
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        margin-left: -64px;
+        font-size: 128px;
+        color: white;
+    }
+
+    #dataIn tr td:nth-child(n+4) {
+        text-align: right;
+    }
+</style>
+<body>
+<head>
+    <h1 style="text-align: center">BQ Financial Reference</h1>
+</head>
+<div id="condition">
+    <div class="layui-form">
+        <label class="layui-form-label">Date:</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" required id="time" lay-verify="required" class="layui-input">
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" name="title" required id="endtime" lay-verify="required" class="layui-input">
+        </div>
+        <button class="layui-btn layui-btn-primary" type="button" id="serch">
+            <i class="layui-icon">&#xe615;</i>
+        </button>
+    </div>
+    <button class="layui-btn layui-btn-normal" id="export" style="margin-right: 30px">
+        Export
+    </button>
+</div>
+<div id="table">
+    <table class="layui-table">
+        <thead>
+        <tr>
+            <td>BU</td>
+            <td>PLATFORM</td>
+            <td>BRAND</td>
+            <td>GMV SALE</td>
+            <td>GMV TARGET</td>
+            <td>Alipay SALE</td>
+            <td>Alipay TARGET</td>
+        </tr>
+        </thead>
+        <tbody id="dataIn">
+
+        </tbody>
+    </table>
+</div>
+<div class="loading">
+    <i class="mate-icon layui-icon layui-anim layui-anim-rotate layui-anim-loop">&#xe63d;</i>
+</div>
+</body>
+<script>
+    var _date = new Date(), _startTime = {}, _endTime = {};
+    _date = _date.setDate(1);
+    layui.use(['laydate', "jquery", "layer"], function () {
+        var laydate = layui.laydate, $ = layui.$, layer = layui.layer, loading;
+        laydate.render({
+            elem: '#time'
+            , value: new Date(_date)
+            , trigger: 'click'
+        });
+        laydate.render({
+            elem: '#endtime'
+            , value: new Date()
+            , trigger: 'click'
+            , done: function (value, date, endDate) {
+                _startTime.format = $("#time").val();
+                _startTime.value = new Date(_startTime.format)
+                _endTime.format = value;
+                _endTime.value = new Date(value)
+                if (_startTime.value.getTime() > _endTime.value.getTime()) {
+                    layer.msg("开始日期必须小于结束日期")
+                    $("#endtime").val(_startTime.format)
+                }else if (_startTime.value.getFullYear() < _endTime.value.getFullYear() || _startTime.value.getMonth() < _endTime.value.getMonth()) {
+                    layer.msg("只能选择当前年份月份的日期")
+                    $("#endtime").val(_startTime.format)
+                }else {
+                    init();
+                }
+
+            }
+        });
+
+//初始化数据
+        function init(value) {
+            $(".loading").show()
+            val = {
+                startDate: $("#time").val(),
+                endDate: $("#endtime").val()
+            };
+            console.log(val)
+            serch(val);
+        }
+
+        $("#serch")[0].onclick = init;
+        init();
+
+//		数字格式化
+        function formatNum(strNum) {
+            if (strNum.length <= 3) {
+                return strNum;
+            }
+            if (!/^(\+|-)?(\d+)(\.\d+)?$/.test(strNum)) {
+                return strNum;
+            }
+            var a = RegExp.$1,
+                b = RegExp.$2,
+                c = RegExp.$3;
+
+            var re = new RegExp();
+
+            re.compile("(\\d)(\\d{3})(,|$)");
+
+            while (re.test(b)) {
+
+                b = b.replace(re, "$1,$2$3");
+
+            }
+            return a + "" + b + "" + c;
+        }
+
+        function initShow(res) {
+            var _html = "";
+            for (var i = 1; i < res.length; i++) {
+
+                var BU = res[i].department;
+                for (var j in res[i].platFromSalesMap) {
+                    var Platform = j;
+
+                    for (var m in res[i].platFromSalesMap[j].shopPojos) {
+                        _html += "<tr>\
+                                <td>" + BU + "</td>\
+                                <td>" + Platform + "</td>\
+                                <td>" + formatNum(res[i].platFromSalesMap[j].shopPojos[m].showName) + "</td>\
+                              <td>" + formatNum(res[i].platFromSalesMap[j].shopPojos[m].gmv) + "</td>\
+                                <td>" + formatNum(res[i].platFromSalesMap[j].shopPojos[m].gmvTarget) + "</td>\
+                              <td>" + formatNum(res[i].platFromSalesMap[j].shopPojos[m].alipay) + "</td>\
+                               <td>" + formatNum(res[i].platFromSalesMap[j].shopPojos[m].alipayTarget) + "</td>\
+                             </tr>"
+                    }
+
+                }
+            }
+            // layer.close(loading);
+            var tab = "<table>   <tr>\
+                          <td>BU</td>\
+                          <td>PLATFORM</td>\
+                           <td>BRAND</td>\
+                            <td>GMV SALE</td>\
+                          <td>GMV TARGET</td>\
+                           <td>Alipay SALE</td>\
+                          <td>Alipay TARGET</td>\
+                       </tr>" + _html + "</table>"
+            $("#dataIn").html(_html)
+            $(".loading").hide()
+
+            $('#export').click(function (res) {
+                JSONToExcelConvertor(tab, $("#time").val())
+            });
+        }
+
+        function serch() {
+            // $.ajax({
+            //     type: "get",
+            //     dataType: "json",
+            //     data: val,
+                // url: "你的请求地址",
+                // success: function (res) {
+                    res={
+                        "status": "ok",
+                        "error": "",
+                        "data": [
+                        {
+                            "startDate": "",
+                            "endDate": "",
+                            "department": "Grand Total",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 12,
+                                "gmvTarget": 12,
+                                "gmvRate": 12,
+                                "alipay": 21,
+                                "alipayTarget": 12,
+                                "alipayRate": 21,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": "",
+                            "platFromSalesMap": {}
+                        },
+                        {
+                            "startDate": "2018-07-01",
+                            "endDate": "2018-07-26",
+                            "department": "Bags&Luggages",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 0.87,
+                                "gmvTarget": 0,
+                                "gmvRate": 0.0,
+                                "alipay": 0.35,
+                                "alipayTarget": 0,
+                                "alipayRate": 0.0,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": {
+                                "id": 1,
+                                "ex": 1,
+                                "name": "Bags&Luggages",
+                                "nameEn": "Bag",
+                                "sort": 1,
+                                "nameCn": "箱包"
+                            },
+                            "platFromSalesMap": {
+                                "TM": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.26,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.86,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "elle箱包官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.48,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.33,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "jessiejane旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.18,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.59,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "kipling官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.94,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.03,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "salad旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.34,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.3,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "凯特周官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.83,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.53,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "delsey箱包旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "箱包新客户",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.84,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.71,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "bauhaus服饰旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.87,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0.0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0.0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "elle箱包官方旗舰店": 0
+                                        },
+                                        "detailGmv": {
+                                            "elle箱包官方旗舰店": 0.26
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "VIP": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "kipling_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "elle_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "jessiejane_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "kipling_VIP": 0
+                                        },
+                                        "detailGmv": {
+                                            "kipling_VIP": 0
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                }
+                            }
+                        },
+                        {
+                            "startDate": "2018-07-01",
+                            "endDate": "2018-07-26",
+                            "department": "Shoes",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 0.59,
+                                "gmvTarget": 0,
+                                "gmvRate": 0.0,
+                                "alipay": 0.19,
+                                "alipayTarget": 0,
+                                "alipayRate": 0.0,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": {
+                                "id": 2,
+                                "ex": 1,
+                                "name": "Shoes",
+                                "nameEn": "Shoes",
+                                "sort": 2,
+                                "nameCn": "鞋履"
+                            },
+                            "platFromSalesMap": {
+                                "TM": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.9,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.59,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "achette雅氏旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.72,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.24,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "cpu旗舰",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.58,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.02,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "clarks女鞋旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.37,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.17,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "clarks童鞋旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "鞋履新客户",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.83,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.3,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "toms旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.45,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.54,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "gabor旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.99,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.99,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "clarks官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.15,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.12,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "rockport乐步旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.55,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.94,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "colehaan旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.72,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.56,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "kennethcole鞋类旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.04,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.28,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "cloudsteppers旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.29,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.44,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "fed旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.59,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0.19,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0.54,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "achette雅氏旗舰店": 0
+                                        },
+                                        "detailGmv": {
+                                            "achette雅氏旗舰店": 0.9
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "JD": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "clarks女鞋JD",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "clarks官方旗舰店-京东店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "rockport_JD",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "fed京东店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "clarks女鞋JD": 0
+                                        },
+                                        "detailGmv": {
+                                            "clarks女鞋JD": 0
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "VIP": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "toms唯品店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "colehaan_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "cpu_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "KENNETH COLE_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "fed_VIP",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "toms唯品店": 0
+                                        },
+                                        "detailGmv": {
+                                            "toms唯品店": 0
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                }
+                            }
+                        },
+                        {
+                            "startDate": "2018-07-01",
+                            "endDate": "2018-07-26",
+                            "department": "Apparel",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 0.19,
+                                "gmvTarget": 0,
+                                "gmvRate": 0.0,
+                                "alipay": 0.57,
+                                "alipayTarget": 0,
+                                "alipayRate": 0.0,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": {
+                                "id": 3,
+                                "ex": 1,
+                                "name": "Apparel",
+                                "nameEn": "Dress",
+                                "sort": 3,
+                                "nameCn": "服装"
+                            },
+                            "platFromSalesMap": {
+                                "Official Site": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "sandro官网",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "maje官网",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "sandro官网": 0
+                                        },
+                                        "detailGmv": {
+                                            "sandro官网": 0
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "TM": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.21,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.62,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "sandro官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.83,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.49,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "maje官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.4,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.95,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "edhardy旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "服饰新客户",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.1,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.78,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "claudiepierlot官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.91,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.3,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "歌力思官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.59,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.77,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "6ixty8ight官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.15,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.16,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "pinko官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "yirantian旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.5,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "bash旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.19,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0.57,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0.0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "sandro官方旗舰店": 0
+                                        },
+                                        "detailGmv": {
+                                            "sandro官方旗舰店": 0.21
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                }
+                            }
+                        },
+                        {
+                            "startDate": "2018-07-01",
+                            "endDate": "2018-07-26",
+                            "department": "Accessories",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 0.79,
+                                "gmvTarget": 0,
+                                "gmvRate": 0.4286,
+                                "alipay": 0,
+                                "alipayTarget": 0,
+                                "alipayRate": 0.3571,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": {
+                                "id": 5,
+                                "ex": 1,
+                                "name": "Accessories",
+                                "nameEn": "ACC",
+                                "sort": 5,
+                                "nameCn": "配饰"
+                            },
+                            "platFromSalesMap": {
+                                "Official Site": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0.00",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.4,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "pandora潘多拉官网",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.4,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": "",
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "pandora潘多拉官网": 0
+                                        },
+                                        "detailGmv": {
+                                            "pandora潘多拉官网": 0.4
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "TM": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.63,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.02,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "fossil官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.17,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "skagen官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.46,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.78,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "pandora潘多拉官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.93,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.89,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "alexandredeparis旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.42,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "tissot天梭官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.24,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "swatch斯沃琪官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "配饰新客户",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0.37,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "fossil海外旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "MYD官方旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "盛时奥莱旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.39,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0.0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "fossil官方旗舰店": 0
+                                        },
+                                        "detailGmv": {
+                                            "fossil官方旗舰店": 0.63
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                }
+                            }
+                        },
+                        {
+                            "startDate": "2018-07-01",
+                            "endDate": "2018-07-26",
+                            "department": "Luxury",
+                            "platForm": "",
+                            "salesTarget": "0",
+                            "salesAmont": "0",
+                            "percentage": "0",
+                            "shopPojos": [],
+                            "shopTvShowTablePojo": {
+                                "gmv": 0.1,
+                                "gmvTarget": 0,
+                                "gmvRate": 0.0,
+                                "alipay": 0.28,
+                                "alipayTarget": 0,
+                                "alipayRate": 0.0,
+                                "yesterdaySale": 0,
+                                "todaySale": 0,
+                                "orderNum": 0,
+                                "showName": "",
+                                "background": "",
+                                "detailTarget": {},
+                                "detailGmv": {},
+                                "classMap": {},
+                                "lastMonthGmv": 0
+                            },
+                            "saleCate": {
+                                "id": 6,
+                                "ex": 1,
+                                "name": "Luxury",
+                                "nameEn": "Luxury",
+                                "sort": 6,
+                                "nameCn": "奢品"
+                            },
+                            "platFromSalesMap": {
+                                "TM": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0.1,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0.28,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "TUMI旗舰店",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        },
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "Luxury新客户",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0.1,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0.20639,
+                                        "alipay": 0.28,
+                                        "alipayTarget": 0,
+                                        "alipayRate": 0.0,
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "TUMI旗舰店": 0
+                                        },
+                                        "detailGmv": {
+                                            "TUMI旗舰店": 0.1
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                },
+                                "JD": {
+                                    "startDate": "",
+                                    "endDate": "",
+                                    "department": "",
+                                    "platForm": "",
+                                    "salesTarget": "0",
+                                    "salesAmont": "0",
+                                    "percentage": "0.00",
+                                    "shopPojos": [
+                                        {
+                                            "gmv": 0,
+                                            "gmvTarget": 0,
+                                            "gmvRate": "",
+                                            "alipay": 0,
+                                            "alipayTarget": 0,
+                                            "alipayRate": "",
+                                            "yesterdaySale": 0,
+                                            "todaySale": 0,
+                                            "orderNum": 0,
+                                            "showName": "TUMI_JD",
+                                            "background": "",
+                                            "detailTarget": {},
+                                            "detailGmv": {},
+                                            "classMap": {},
+                                            "lastMonthGmv": 0
+                                        }
+                                    ],
+                                    "shopTvShowTablePojo": {
+                                        "gmv": 0,
+                                        "gmvTarget": 0,
+                                        "gmvRate": 0,
+                                        "alipay": 0,
+                                        "alipayTarget": 0,
+                                        "alipayRate": "",
+                                        "yesterdaySale": 0,
+                                        "todaySale": 0,
+                                        "orderNum": 0,
+                                        "showName": "",
+                                        "background": "",
+                                        "detailTarget": {
+                                            "TUMI_JD": 0
+                                        },
+                                        "detailGmv": {
+                                            "TUMI_JD": 0
+                                        },
+                                        "classMap": {},
+                                        "lastMonthGmv": 0
+                                    },
+                                    "saleCate": "",
+                                    "platFromSalesMap": {}
+                                }
+                            }
+                        }
+                    ],
+                        "total": 0
+                    }
+                    initShow(res.data);
+                // }
+            // });
+        }
+
+        function JSONToExcelConvertor(table, FileName) {
+            var excel = table;
+            var excelFile = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>";
+            excelFile += '<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">';
+            excelFile += '<meta http-equiv="content-type" content="application/vnd.ms-excel';
+            excelFile += '; charset=UTF-8">';
+            excelFile += "<head>";
+            excelFile += "<!--[if gte mso 9]>";
+            excelFile += "<xml>";
+            excelFile += "<x:ExcelWorkbook>";
+            excelFile += "<x:ExcelWorksheets>";
+            excelFile += "<x:ExcelWorksheet>";
+            excelFile += "<x:Name>";
+            excelFile += "sheet1";
+            excelFile += "</x:Name>";
+            excelFile += "<x:WorksheetOptions>";
+            excelFile += "<x:DisplayGridlines/>";
+            excelFile += "</x:WorksheetOptions>";
+            excelFile += "</x:ExcelWorksheet>";
+            excelFile += "</x:ExcelWorksheets>";
+            excelFile += "</x:ExcelWorkbook>";
+            excelFile += "</xml>";
+            excelFile += "<![endif]-->";
+            excelFile += "</head>";
+            excelFile += "<body>";
+            excelFile += excel;
+            excelFile += "</body>";
+            excelFile += "</html>";
+
+
+            var uri = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(excelFile);
+
+            var link = document.createElement("a");
+            link.href = uri;
+
+            link.style = "visibility:hidden";
+            link.download = FileName + ".xls";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+</script>
+
+</html>

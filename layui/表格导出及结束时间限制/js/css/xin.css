@@ -1,0 +1,278 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+ul li {
+	list-style: none;
+}
+
+a {
+	text-decoration: none;
+}
+
+.topfont {
+	width: 100%;
+	height: 1.2em;
+}
+
+.topfont p {
+	text-align: center;
+	font-size: 0.32em;
+	padding-top: 1em;
+	padding-bottom: 0.6em;
+}
+
+.content1 {
+	width: 95%;
+	margin: 0 auto;
+}
+
+.con {
+	display: none;
+}
+
+.show {
+	display: block;
+}
+
+.btn-cont {
+	margin-left: 2.5%;
+}
+
+.btn-cont button {
+	width: 15%;
+	height: 1.4em;
+	font-size: 0.32em;
+}
+
+.top {
+	width: 100%;
+	overflow: hidden;
+}
+
+.store {
+	height: 0.5em;
+}
+
+.top .top-cont {
+	width: 24.5%;
+	float: left;
+	border-right: 1px solid #ffffff;
+	border-top: 1px solid #ffffff;
+	background: #ebebeb;
+}
+
+.top-blank {
+	width: 10%;
+	border-right: 1px solid #ffffff;
+	float: left;
+	position: relative;
+}
+
+.top-blank1 {
+	width: 80%;
+	float: left;
+}
+
+.top .top-cont p {
+	font-size: 0.2em;
+	text-align: right;
+	/*padding-top: 0.6em;
+    padding-bottom: 0.6em;*/
+	height: 2em;
+	line-height: 2em;
+}
+.header .top-cont p{
+	text-align: center;
+}
+.top .top-cont:first-child p{
+	text-align: center;
+}
+
+.panel .top .top-cont p {
+	height: 1.4em;
+	line-height: 1.4em;
+}
+
+.flip1 {
+	overflow: hidden;
+}
+
+.flip2 {
+	overflow: hidden;
+}
+
+.panel {
+	display: none;
+}
+
+.panel2 {
+	display: none;
+}
+
+
+/*.panel .top .top-cont p{
+    font-size: 0.2em;
+    text-align: center;
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+}*/
+
+.store-cont1 p {
+	font-size: 0.2em;
+	text-align: center;
+	padding-top: 0.6em;
+	padding-bottom: 0.6em;
+}
+
+.time input {
+	width: 40%;
+	float: left;
+	margin-left: 3%;
+	font-size: 0.4em;
+	height: 1.4em;
+}
+
+.time-img {
+	width: 12%;
+	height: 0.56em;
+	float: left;
+	margin-left: 1%;
+	background: #01AAED;
+}
+
+.time-img i {
+	color: #ffffff;
+	font-size: 0.3em;
+}
+
+.btn-cont {
+	overflow: hidden;
+	width: 95%;
+	margin: 0  auto;
+	padding: 0;
+	list-style: none;
+	font-size: 0.6em;
+	position: relative;
+}
+
+.btn-cont .bunt{
+	float: left;
+	margin: 0 .5em 0 0;
+	
+}
+
+.btn-cont .bunt1 a,
+.btn-cont .bunt1 a::after {
+	background: #fff;
+	z-index: 3;
+}
+
+.btn-cont a {
+	position: relative;
+	background: #fff;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ddd));
+	background-image: -webkit-linear-gradient(top, #fff, ##dedede);
+	background-image: -moz-linear-gradient(top, #fff, #ddd);
+	background-image: -ms-linear-gradient(top, #fff, #ddd);
+	background-image: -o-linear-gradient(top, #fff, #ddd);
+	background-image: linear-gradient(to bottom, #fff, #ddd);
+	 padding: 0.1em 1.1em;
+	float: left;
+	text-decoration: none;
+	color: #444;
+	text-shadow: 0 1px 0 rgba(255, 255, 255, .8);
+	-webkit-border-radius: 5px 0 0 0;
+	-moz-border-radius: 5px 0 0 0;
+	border-radius: 5px 0 0 0;
+	-moz-box-shadow: 0 2px 2px rgba(0, 0, 0, .4);
+	-webkit-box-shadow: 0 2px 2px rgba(0, 0, 0, .4);
+	box-shadow: 0 2px 2px rgba(0, 0, 0, .4);
+}
+
+.btn-cont .bunt1 a,
+.btn-cont .bunt1 a::after {
+	background: #DDDDDD;
+	z-index: 3;
+}
+.butn a{
+	font-size: 0.5em;
+}
+
+.btn-cont a::after {
+	content: '';
+	position: absolute;
+	z-index: 1;
+	top: 0;
+	right: -.5em;
+	bottom: 0;
+	width: 1em;
+	background: #DDDDDD;
+	background-image: linear-gradient(to bottom, #fff, #ddd);
+	box-shadow: 2px 2px 2px rgba(0, 0, 0, .4);
+	transform: skew(10deg);
+	border-radius: 0 5px 0 0;
+}
+
+.shop .grandTotal .top-cont {
+    background-color: #ffc77c;
+	border-color: #ffb047;
+}
+
+.bagsLuggages .top-cont{
+	background-color: #dff0d8;
+	border-color: #d6e9c6;
+}
+.Shoes .top-cont{
+	background-color: #fcf8e3;
+	border-color: #fbeed5
+}
+
+
+.Apparel .top-cont{
+	background-color: #d9edf7;
+	border-color: #bce8f1;
+}
+
+
+.Accessories .top-cont{
+    background-color: #f2dede;
+	border-color: #eed3d7;
+}
+.Luxury .top-cont{
+	background-color: #e5cef1;
+	border-color: #cfb6dc;
+}
+.bagsLuggages~.pojos .top-cont,.bagsLuggages~.pojos2 .top-cont{
+	background-color:rgba(223,240,216,.7);
+}
+.Shoes~.pojos .top-cont,.Shoes~.pojos2 .top-cont{
+	background-color: rgba(252,248,227,.7);
+}
+.Apparel~.pojos .top-cont,.Apparel~.pojos2 .top-cont{
+	background-color:rgba(217,237,247,.7) ;
+}
+.Accessories~.pojos .top-cont,.Accessories~.pojos2 .top-cont{
+	background-color: rgba(242,222,222,.7);
+}
+.Luxury~.pojos .top-cont,.Luxury~.pojos2 .top-cont{
+	background-color: rgba(229,206,241,.7);
+}
+
+
+.bagsLuggages~.panel .top-cont,.bagsLuggages~.panel2 .top-cont{
+	background-color:rgba(223,240,216,.4);
+}
+.Shoes~.panel .top-cont,.Shoes~.panel2 .top-cont{
+	background-color: rgba(252,248,227,.4);
+}
+.Apparel~.panel .top-cont,.Apparel~.panel2 .top-cont{
+	background-color:rgba(217,237,247,.4) ;
+}
+.Accessories~.panel .top-cont,.Accessories~.panel2 .top-cont{
+	background-color: rgba(242,222,222,.4);
+}
+.Luxury~.panel .top-cont,.Luxury~.panel2 .top-cont{
+	background-color: rgba(229,206,241,.4);
+}
